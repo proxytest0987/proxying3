@@ -305,3 +305,73 @@ app.use((req,res,next)=>{
 // 起動
 const PORT = process.env.PORT || 3000;
 http.createServer(app).listen(PORT, ()=>console.log('Proxy listening on '+PORT+' BUILD_ID='+BUILD_ID));
+// ---- シェル（アドレスバー固定モード） ----
+// 例: /s?url=https://www.instagram.com
+app.get('/s', (req, res) => {
+  const raw = req.query.url || 'https://www.google.com/';
+  let abs;
+  try { abs = new URL(raw).toString(); } catch { return res.status(400).send('Invalid url'); }
+  // iframeに top遷移・popup を禁止するsandboxを付与
+  // allow-scripts/allow-forms/allow-same-origin は中身を通常どおり動かすために許可
+  const html = `<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>Proxy Shell</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    html,body{height:100%;margin:0;padding:0;}
+    #bar{display:flex;gap:8px;align-items:center;padding:8px;border-bottom:1px solid #ddd;box-sizing:border-box;}
+    #url{flex:1;padding:6px 8px;border:1px solid #bbb;border-radius:4px;}
+    #view{width:100%;height:calc(100% - 50px);border:0;display:block;}
+  </style>
+</head>
+<body>
+  <div id="bar">
+    <form id="f" action="/s" method="get" style="display:flex;gap:8px;flex:1;">
+      <input id="url" type="text" name="url" value="${abs.replace(/"/g,'&quot;')}" placeholder="https://example.com">
+      <button type="submit">開く</button>
+      <button type="button" id="back">戻る</button>
+      <button type="button" id="fwd">進む</button>
+    </form>
+  </div>
+  <iframe id="view"
+    sandbox="allow-scripts allow-forms allow-same-origin"
+    referrerpolicy="no-referrer"
+    src="/p?url=${encodeURIComponent(abs)}"></iframe>
+  <script>
+    (function(){
+      const v = document.getElementById('view');
+      const u = document.getElementById('url');
+      const back = document.getElementById('back');
+      const fwd = document.getElementById('fwd');
+
+      // iframe 内のURL変化をツールバーに反映（同一オリジンなので参照可）
+      const updateBar = () => {
+        try { u.value = v.contentWindow.location.href; } catch {}
+      };
+      v.addEventListener('load', updateBar);
+
+      back.onclick = () => { try { v.contentWindow.history.back(); } catch {} };
+      fwd.onclick  = () => { try { v.contentWindow.history.forward(); } catch {} };
+
+      // 安全側: iframe内のwindow.openは同一タブ内で扱う
+      v.addEventListener('load', () => {
+        try {
+          const w = v.contentWindow;
+          const _open = w.open;
+          w.open = function(u,t,f){
+            try { if (typeof u === 'string') u = '/p?url=' + encodeURIComponent(new URL(u, w.location.href).toString()); } catch {}
+            // sandboxにより新規タブは基本ブロックされるが、明示的に同一フレーム遷移へ
+            w.location.href = u;
+            return null;
+          };
+        } catch {}
+      });
+    })();
+  </script>
+</body>
+</html>`;
+  res.setHeader('Cache-Control','no-store');
+  res.status(200).send(html);
+});
