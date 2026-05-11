@@ -7,22 +7,26 @@
 </head>
 <body>
   <h1>Proxy Portal</h1>
+
   <form action="/go" method="get">
     <input type="text" name="url" placeholder="https://example.com" style="width:70%">
     <button type="submit">開く</button>
   </form>
-  <p style="margin-top:12px;">
-    <a href="/p?url=https://www.google.com">Google</a>
-    <a href="/p?url=https://poki.com/jp">Poki</a>
-    <a href="/p?url=https://www.instagram.com">Instagram</a>
-    <a href="/p?url=https://x.com">X</a>
+
+  <p style="margin-top:12px;line-height:1.8">
+    <a href="/p?url=https://www.google.com">Google（ 従来）</a> /
+    <a href="/s?url=https://www.google.com">Google（アドレス 固定）</a><br>
+
+    <a href="/p?url=https://poki.com/jp">Poki（ 従来）</a> /
+    <a href="/s?url=https://poki.com/jp">Poki（アドレス 固定）</a><br>
+
+    <a href="/p?url=https://www.instagram.com">Instagram（ 従来）</a> /
+    <a href="/s?url=https://www.instagram.com">Instagram（アドレス 固定）</a><br>
+
+    <a href="/p?url=https://x.com">X（ 従来）</a> /
+    <a href="/s?url=https://x.com">X（アドレス 固定）</a><br>
+
     <a href="/p?url=https://abehiroshi.la.coocan.jp/"> 阿部寛のHP</a>
   </p>
-  <p style="margin-top:12px;">
-  <!-- これまで通りの直開き -->
-  <a href="/p?url=https://www.instagram.com">Instagram（ 従来）</a>
-  <!-- アドレスバー固定シェルで開く版 -->
-  <a href="/s?url=https://www.instagram.com">Instagram（アドレス 固定）</a>
-</p>
 </body>
 </html>
